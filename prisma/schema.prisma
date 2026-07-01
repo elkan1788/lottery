@@ -8,29 +8,36 @@ datasource db {
 }
 
 model LotteryPrize {
-  id                Int      @id @default(autoincrement())
+  id                String          @id
   name              String
   tier              Int
-  probabilityWeight Int      @default(1) @map("probability_weight")
-  stock             Int      @default(0)
-  imageUrl          String?  @map("image_url")
-  isActive          Boolean  @default(true) @map("is_active")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  probabilityWeight Int             @default(1) @map("probability_weight")
+  stockTotal        Int             @default(0) @map("stock_total")
+  stockRemaining    Int             @default(0) @map("stock_remaining")
+  imageUrl          String?         @map("image_url")
+  description       String?
+  isActive          Boolean         @default(true) @map("is_active")
+  sortOrder         Int             @default(0) @map("sort_order")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  winners           LotteryWinner[]
 
   @@map("lottery_prizes")
   @@index([tier])
 }
 
 model LotteryWinner {
-  id              Int      @id @default(autoincrement())
-  nickname        String
-  prizeName       String   @map("prize_name")
-  tier            Int
-  wonAt           DateTime @default(now()) @map("won_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                String       @id
+  nickname          String
+  prizeId           String       @map("prize_id")
+  prizeNameSnapshot String       @map("prize_name_snapshot")
+  tierSnapshot      Int          @map("tier_snapshot")
+  wonAt             DateTime     @default(now()) @map("won_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  prize             LotteryPrize @relation(fields: [prizeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
 
+  @@index([prizeId])
   @@index([wonAt(sort: Desc)])
   @@map("lottery_winner")
 }

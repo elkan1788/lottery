@@ -1,13 +1,21 @@
+import crypto from "node:crypto";
+
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
-import type { DrawResult, PrizeListItem, WinnerListItem } from "@/lib/lottery/types";
+import type {
+  DrawResult,
+  PrizeFilters,
+  PrizeListItem,
+  WinnerFilters,
+  WinnerListItem,
+} from "@/lib/lottery/types";
 
 const winnerSelect = {
   id: true,
   nickname: true,
-  prizeName: true,
-  tier: true,
+  prizeNameSnapshot: true,
+  tierSnapshot: true,
   wonAt: true,
 } as const;
 
@@ -16,29 +24,60 @@ const prizeSelect = {
   name: true,
   tier: true,
   probabilityWeight: true,
-  stock: true,
+  stockTotal: true,
+  stockRemaining: true,
   imageUrl: true,
+  description: true,
   isActive: true,
+  sortOrder: true,
   createdAt: true,
   updatedAt: true,
 } as const;
 
-export async function listPrizes(): Promise<PrizeListItem[]> {
+export async function listPrizes(filters: PrizeFilters = {}): Promise<PrizeListItem[]> {
+  const orderByMap: Record<NonNullable<PrizeFilters["sort"]>, Prisma.LotteryPrizeOrderByWithRelationInput[]> =
+    {
+      "tier-asc": [{ tier: "asc" }, { id: "asc" }],
+      "tier-desc": [{ tier: "desc" }, { id: "desc" }],
+      "stock-desc": [{ stockRemaining: "desc" }, { tier: "asc" }, { id: "asc" }],
+      "stock-asc": [{ stockRemaining: "asc" }, { tier: "asc" }, { id: "asc" }],
+      "updated-desc": [{ updatedAt: "desc" }, { id: "desc" }],
+    };
+
   return prisma.lotteryPrize.findMany({
-    orderBy: [{ tier: "asc" }, { id: "asc" }],
+    where: {
+      ...(filters.status === "active" ? { isActive: true } : {}),
+      ...(filters.status === "inactive" ? { isActive: false } : {}),
+      ...(filters.keyword
+        ? {
+            name: {
+              contains: filters.keyword,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+    },
+    orderBy: orderByMap[filters.sort || "tier-asc"],
     select: prizeSelect,
   });
 }
 
-export async function createPrize(input: Omit<PrizeListItem, "id" | "createdAt" | "updatedAt">) {
+export async function createPrize(input: Omit<PrizeListItem, "createdAt" | "updatedAt">) {
   return prisma.lotteryPrize.create({
     data: input,
     select: prizeSelect,
   });
 }
 
+export async function getPrizeById(id: string) {
+  return prisma.lotteryPrize.findUnique({
+    where: { id },
+    select: prizeSelect,
+  });
+}
+
 export async function updatePrize(
-  id: number,
+  id: string,
   input: Partial<Omit<PrizeListItem, "id" | "createdAt" | "updatedAt">>,
 ) {
   return prisma.lotteryPrize.update({
@@ -48,12 +87,45 @@ export async function updatePrize(
   });
 }
 
-export async function listWinners(limit = 20): Promise<WinnerListItem[]> {
+export async function listWinners(filters: number | WinnerFilters = 20): Promise<WinnerListItem[]> {
+  const normalized =
+    typeof filters === "number"
+      ? { limit: filters }
+      : {
+          limit: filters.limit ?? 20,
+          keyword: filters.keyword?.trim() || undefined,
+          tier: filters.tier,
+        };
+
   return prisma.lotteryWinner.findMany({
+    where: {
+      ...(normalized.keyword
+        ? {
+            OR: [
+              { nickname: { contains: normalized.keyword, mode: "insensitive" } },
+              {
+                prizeNameSnapshot: {
+                  contains: normalized.keyword,
+                  mode: "insensitive",
+                },
+              },
+            ],
+          }
+        : {}),
+      ...(normalized.tier ? { tierSnapshot: normalized.tier } : {}),
+    },
     orderBy: [{ wonAt: "desc" }, { id: "desc" }],
-    take: limit,
+    take: normalized.limit,
     select: winnerSelect,
-  });
+  }).then((winners) =>
+    winners.map((winner) => ({
+      id: winner.id,
+      nickname: winner.nickname,
+      prizeName: winner.prizeNameSnapshot,
+      tier: winner.tierSnapshot,
+      wonAt: winner.wonAt,
+    })),
+  );
 }
 
 export async function getEligiblePrizes(
@@ -62,9 +134,9 @@ export async function getEligiblePrizes(
   return tx.lotteryPrize.findMany({
     where: {
       isActive: true,
-      stock: { gt: 0 },
+      stockRemaining: { gt: 0 },
     },
-    orderBy: [{ tier: "asc" }, { id: "asc" }],
+    orderBy: [{ sortOrder: "asc" }, { tier: "asc" }, { id: "asc" }],
     select: prizeSelect,
   });
 }
@@ -118,10 +190,10 @@ export async function runLottery(nickname: string): Promise<DrawResult> {
       where: {
         id: chosenPrize.id,
         isActive: true,
-        stock: { gt: 0 },
+        stockRemaining: { gt: 0 },
       },
       data: {
-        stock: {
+        stockRemaining: {
           decrement: 1,
         },
       },
@@ -133,19 +205,27 @@ export async function runLottery(nickname: string): Promise<DrawResult> {
 
     const winner = await tx.lotteryWinner.create({
       data: {
+        id: crypto.randomUUID(),
         nickname: trimmedNickname,
-        prizeName: chosenPrize.name,
-        tier: chosenPrize.tier,
+        prizeId: chosenPrize.id,
+        prizeNameSnapshot: chosenPrize.name,
+        tierSnapshot: chosenPrize.tier,
       },
       select: winnerSelect,
     });
 
     return {
       status: "success",
-      winner,
+      winner: {
+        id: winner.id,
+        nickname: winner.nickname,
+        prizeName: winner.prizeNameSnapshot,
+        tier: winner.tierSnapshot,
+        wonAt: winner.wonAt,
+      },
       prize: {
         ...chosenPrize,
-        stock: chosenPrize.stock - 1,
+        stockRemaining: chosenPrize.stockRemaining - 1,
       },
     } satisfies DrawResult;
   });
