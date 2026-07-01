@@ -199,21 +199,19 @@ docs/
 - `name`
 - `tier`
 - `probability_weight`
-- `stock_total`
-- `stock_remaining`
+- `stock`
 - `image_url`
-- `description`
 - `is_active`
-- `sort_order`
 - `created_at`
 - `updated_at`
 
 说明：
 
 - `tier` 用于表示几等奖
-- `probability_weight` 为中奖权重，不直接写概率百分比，便于后续调整
-- `stock_remaining` 用于实时扣减
+- `probability_weight` 为中奖权重，不直接写概率百分比。抽奖时按所有候选奖品的权重总和做归一化随机，例如权重为 1/4/10 时，对应命中概率就是 1/15、4/15、10/15
+- `stock` 表示可发放数量，抽奖时仅保留 `is_active = true` 且 `stock > 0` 的奖品
 - `image_url` 直接存奖品图片地址，避免额外拆表
+- 奖品无需单独描述字段，展示文案可直接由名称和等级承担
 
 ### `lottery_winner`
 
@@ -221,14 +219,13 @@ docs/
 
 - `id`
 - `nickname`
-- `prize_id`
-- `prize_name_snapshot`
-- `tier_snapshot`
+- `prize_name`
+- `tier`
 - `won_at`
 
 说明：
 
-- 中奖记录保留奖品名称快照，避免奖品配置后续变动影响历史展示
+- 中奖记录不再强关联奖品主表，只保留奖品名称和几等奖快照，避免奖品后续调整影响历史展示
 - 时间展示时统一转东八区并格式化到分钟
 
 ## 7. 抽奖引擎规则建议

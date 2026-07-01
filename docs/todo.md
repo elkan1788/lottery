@@ -18,12 +18,12 @@
 
 ## 阶段 B：数据库设计与初始化
 
-- [ ] 设计 `lottery_prizes` 奖品表
-- [ ] 设计 `lottery_winner` 中奖记录表
-- [ ] 在奖品表中收纳图片、中奖率、库存等核心字段
-- [ ] 编写 Prisma Schema
-- [ ] 生成数据库迁移文件
-- [ ] 准备初始 seed 数据
+- [x] 设计 `lottery_prizes` 奖品表
+- [x] 设计 `lottery_winner` 中奖记录表
+- [x] 在奖品表中收纳图片、中奖率、库存等核心字段
+- [x] 编写 Prisma Schema
+- [x] 生成数据库迁移文件
+- [x] 准备初始 seed 数据
 
 ## 阶段 C：后端能力与抽奖引擎设计
 
