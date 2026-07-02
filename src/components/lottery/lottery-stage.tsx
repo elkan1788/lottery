@@ -260,10 +260,7 @@ export function LotteryStage({
               ref={leftColumnRef}
               className="flex min-h-0 flex-col gap-4"
             >
-              <section className="lottery-control-panel grid gap-3 p-3 sm:grid-cols-[140px_minmax(0,1fr)_240px] sm:items-center sm:p-4">
-                <div className="lottery-input-label justify-self-stretch text-center text-2xl font-black tracking-[0.3em] text-[#ffd68a]">
-                  花名
-                </div>
+              <section className="lottery-control-panel grid gap-3 p-3 sm:grid-cols-[minmax(0,1.7fr)_minmax(200px,0.9fr)] sm:items-center sm:p-4">
                 <label className="block">
                   <span className="sr-only">花名</span>
                   <input
@@ -284,10 +281,10 @@ export function LotteryStage({
                   type="button"
                   onClick={() => void handleDraw()}
                   disabled={isSubmitting || drawablePrizes.length === 0}
-                  className="lottery-draw-button h-16 text-xl font-black tracking-[0.18em] text-[#eff8ff] disabled:cursor-not-allowed disabled:opacity-55"
+                  className="lottery-draw-button h-16 px-4 text-lg font-black tracking-[0.16em] text-[#eff8ff] disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   <span className="block">{isSubmitting ? "抽奖进行中" : drawablePrizes.length === 0 ? "活动已结束" : "开始抽奖"}</span>
-                  <span className="mt-1 block text-xs font-medium tracking-[0.28em] text-[#80ddff]">
+                  <span className="mt-1 block text-[10px] font-medium tracking-[0.22em] text-[#80ddff]">
                     START LOTTERY
                   </span>
                 </button>
