@@ -155,7 +155,6 @@ body::after {
 .lottery-control-panel,
 .lottery-prize-wall,
 .lottery-side-panel,
-.lottery-result-shell,
 .lottery-bottom-plaque {
   position: relative;
   border: 1px solid var(--panel-border);
@@ -432,9 +431,9 @@ body::after {
 .lottery-result-shell {
   position: relative;
   overflow: hidden;
-  background:
+  /* background:
     linear-gradient(180deg, rgba(15, 9, 14, 0.86), rgba(8, 6, 12, 0.96)),
-    rgba(0, 0, 0, 0.46);
+    rgba(0, 0, 0, 0.46); */
 }
 
 .lottery-result-popup {
@@ -448,13 +447,13 @@ body::after {
 
 .lottery-result-firework {
   position: absolute;
-  top: 92px;
   width: 150px;
   height: 150px;
   border-radius: 999px;
-  opacity: 0.82;
+  opacity: 0;
   filter: blur(0.2px);
   pointer-events: none;
+  animation: lottery-firework-burst 1.8s ease-out infinite;
 }
 
 .lottery-result-firework::before,
@@ -474,32 +473,75 @@ body::after {
   mask: radial-gradient(circle, transparent 0 28%, #000 31% 34%, transparent 37%);
 }
 
+.lottery-result-firework::before {
+  animation: lottery-firework-rays 1.8s ease-out infinite;
+}
+
 .lottery-result-firework::after {
   transform: scale(0.72) rotate(18deg);
   opacity: 0.76;
+  animation: lottery-firework-rays 1.8s ease-out infinite 180ms;
 }
 
 .lottery-result-firework-left {
   left: -20px;
 }
 
-.lottery-result-firework-right {
-  right: -20px;
+.lottery-result-firework-top-left {
+  top: -60px;
+  left: -68px;
+}
+
+.lottery-result-firework-top-right {
+  top: -56px;
+  right: -64px;
+  animation-delay: 260ms;
+}
+
+.lottery-result-firework-bottom-left {
+  bottom: -56px;
+  left: -58px;
+  animation-delay: 520ms;
+}
+
+.lottery-result-firework-bottom-right {
+  right: -62px;
+  bottom: -60px;
+  animation-delay: 140ms;
+}
+
+.lottery-result-firework-side-left {
+  top: 46%;
+  left: -94px;
+  width: 132px;
+  height: 132px;
+  transform: translateY(-50%);
+  animation-delay: 660ms;
+}
+
+.lottery-result-firework-side-right {
+  top: 40%;
+  right: -90px;
+  width: 136px;
+  height: 136px;
+  transform: translateY(-50%);
+  animation-delay: 400ms;
 }
 
 .lottery-result-panel {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 188, 86, 0.34);
+  /* border: 1px solid rgba(255, 188, 86, 0.34); */
   background:
     radial-gradient(circle at 50% 0%, rgba(255, 150, 58, 0.22), transparent 26%),
     radial-gradient(circle at 50% 100%, rgba(16, 79, 156, 0.2), transparent 28%),
     linear-gradient(180deg, rgba(18, 11, 24, 0.92), rgba(8, 8, 17, 0.97));
-  box-shadow:
+  /* box-shadow:
     inset 0 0 0 1px rgba(255, 220, 176, 0.08),
     0 0 0 1px rgba(255, 164, 67, 0.16),
     0 0 42px rgba(255, 101, 52, 0.18),
-    0 0 68px rgba(40, 111, 255, 0.1);
+    0 0 68px rgba(40, 111, 255, 0.1); */
+  padding: 4vw 0px;
 }
 
 .lottery-result-panel::before,
@@ -522,7 +564,7 @@ body::after {
 .lottery-result-panel::after {
   inset: auto 18px 72px;
   height: 1px;
-  border: 0;
+  /* border: 0; */
   background: linear-gradient(90deg, transparent, rgba(255, 211, 134, 0.78), transparent);
   mask: none;
 }
@@ -589,6 +631,45 @@ body::after {
   }
 }
 
+@keyframes lottery-firework-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+
+  18% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+
+  42% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.34);
+  }
+}
+
+@keyframes lottery-firework-rays {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(0deg);
+  }
+
+  20% {
+    opacity: 1;
+    transform: scale(1) rotate(12deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.32) rotate(24deg);
+  }
+}
+
 @media (max-width: 1279px) {
   .lottery-title-panel::before,
   .lottery-title-panel::after {
@@ -641,9 +722,40 @@ body::after {
   }
 
   .lottery-result-firework {
-    top: 78px;
     width: 120px;
     height: 120px;
+  }
+
+  .lottery-result-firework-top-left {
+    top: -44px;
+    left: -42px;
+  }
+
+  .lottery-result-firework-top-right {
+    top: -42px;
+    right: -40px;
+  }
+
+  .lottery-result-firework-bottom-left {
+    bottom: -42px;
+    left: -36px;
+  }
+
+  .lottery-result-firework-bottom-right {
+    right: -38px;
+    bottom: -44px;
+  }
+
+  .lottery-result-firework-side-left {
+    left: -68px;
+    width: 108px;
+    height: 108px;
+  }
+
+  .lottery-result-firework-side-right {
+    right: -66px;
+    width: 112px;
+    height: 112px;
   }
 
   .lottery-prize-card {

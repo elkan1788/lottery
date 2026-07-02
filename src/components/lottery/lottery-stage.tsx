@@ -41,6 +41,12 @@ type DrawErrorResponse = {
 
 const HIGHLIGHT_INTERVAL_MS = 90;
 const MIN_ROLL_DURATION_MS = 2200;
+const RESULT_HOLD_DURATION_MS = 900;
+const DEFAULT_RESULT_MODAL_COUNTDOWN_SECONDS = 5;
+const resultCountdownEnv = Number(process.env.NEXT_PUBLIC_RESULT_COUNTDOWN_SECONDS);
+const RESULT_MODAL_COUNTDOWN_SECONDS = Number.isFinite(resultCountdownEnv)
+  ? Math.max(0, resultCountdownEnv)
+  : DEFAULT_RESULT_MODAL_COUNTDOWN_SECONDS;
 
 function getTierText(tier: number) {
   return `${tier} 等奖`;
@@ -78,7 +84,9 @@ export function LotteryStage({
   const [activeIndex, setActiveIndex] = useState(0);
   const [resultPrizeId, setResultPrizeId] = useState<number | null>(null);
   const [resultWinner, setResultWinner] = useState<WinnerWithLabel | null>(null);
-  const [statusMessage, setStatusMessage] = useState("输入花名后，点击开始抽奖。");
+  const [resultCountdown, setResultCountdown] = useState(RESULT_MODAL_COUNTDOWN_SECONDS);
+  const [pendingResultWinner, setPendingResultWinner] = useState<WinnerWithLabel | null>(null);
+  const [, setStatusMessage] = useState("输入花名后，点击开始抽奖。");
 
   const visiblePrizes = useMemo(
     () => prizes.filter((prize) => prize.isActive),
@@ -140,13 +148,56 @@ export function LotteryStage({
     };
   }, [winners.length, resultWinner, visiblePrizes.length]);
 
+  useEffect(() => {
+    if (!resultWinner) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setResultCountdown((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          setResultWinner(null);
+          setResultPrizeId(null);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [resultWinner]);
+
+  useEffect(() => {
+    if (!pendingResultWinner || !resultPrizeId) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setResultCountdown(RESULT_MODAL_COUNTDOWN_SECONDS);
+      setResultWinner(pendingResultWinner);
+      setPendingResultWinner(null);
+      setIsSubmitting(false);
+    }, RESULT_HOLD_DURATION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [pendingResultWinner, resultPrizeId]);
+
   const resolvedActiveIndex =
-    !isSubmitting && resultPrizeId
+    resultPrizeId && !resultWinner
       ? visiblePrizes.findIndex((prize) => prize.id === resultPrizeId)
       : activeIndex;
   const resultPrize = resultPrizeId
     ? visiblePrizes.find((prize) => prize.id === resultPrizeId) ?? null
     : null;
+
+  function closeResultModal() {
+    setResultWinner(null);
+    setResultPrizeId(null);
+    setPendingResultWinner(null);
+    setResultCountdown(RESULT_MODAL_COUNTDOWN_SECONDS);
+  }
 
   async function handleDraw() {
     const trimmedNickname = nickname.trim();
@@ -161,6 +212,7 @@ export function LotteryStage({
     setIsSubmitting(true);
     setResultWinner(null);
     setResultPrizeId(null);
+    setPendingResultWinner(null);
     setStatusMessage("抽奖进行中，幸运即将揭晓...");
 
     const startAt = Date.now();
@@ -223,10 +275,9 @@ export function LotteryStage({
         );
         setWinners((current) => [nextWinner, ...current].slice(0, 20));
         setResultPrizeId(payload.prize.id);
-        setResultWinner(nextWinner);
+        setPendingResultWinner(nextWinner);
         setStatusMessage(`恭喜 ${nextWinner.nickname} 抽中 ${nextWinner.prizeName}`);
         setNickname("");
-        setIsSubmitting(false);
       }, remainingDelay);
     } catch {
       setStatusMessage("网络连接异常，请稍后重试。");
@@ -305,7 +356,7 @@ export function LotteryStage({
                           visibleIndex >= 0 &&
                           visiblePrizes.length > 0 &&
                           (resolvedActiveIndex >= 0 ? resolvedActiveIndex : activeIndex) === visibleIndex &&
-                          (isSubmitting || resultPrizeId === prize.id);
+                          (isSubmitting || !!resultPrizeId);
 
                         return (
                           <article
@@ -392,9 +443,9 @@ export function LotteryStage({
                 </div>
               </section>
 
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20">
-                {resultWinner ? (
-                  <section className="lottery-result-shell lottery-result-popup pointer-events-auto p-4">
+              {resultWinner ? (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#120602]/70 px-4 py-6 backdrop-blur-[6px]">
+                  <section className="lottery-result-shell lottery-result-popup pointer-events-auto relative w-full max-w-[560px] p-4">
                     <div className="lottery-result-heading text-center">
                       <p className="text-[2.5rem] font-black leading-none text-[#fff4cf] sm:text-[3.1rem]">
                         恭喜中奖
@@ -404,8 +455,12 @@ export function LotteryStage({
                       </p>
                     </div>
 
-                    <div className="lottery-result-firework lottery-result-firework-left" />
-                    <div className="lottery-result-firework lottery-result-firework-right" />
+                    <div className="lottery-result-firework lottery-result-firework-top-left" />
+                    <div className="lottery-result-firework lottery-result-firework-top-right" />
+                    <div className="lottery-result-firework lottery-result-firework-bottom-left" />
+                    <div className="lottery-result-firework lottery-result-firework-bottom-right" />
+                    <div className="lottery-result-firework lottery-result-firework-side-left" />
+                    <div className="lottery-result-firework lottery-result-firework-side-right" />
 
                     <div className="mt-4">
                       <div className="lottery-result-panel rounded-[28px] px-5 py-6 text-center">
@@ -431,17 +486,22 @@ export function LotteryStage({
                             <span className="text-sm text-white/45">暂无图片</span>
                           )}
                         </div>
-                        <p className="mt-5 text-base text-[#f8d39d]">
-                          {getTierText(resultWinner.tier)} · {resultWinner.wonAtLabel}
-                        </p>
-                        <div className="lottery-result-button mx-auto mt-6 inline-flex min-h-16 min-w-[240px] items-center justify-center px-8 text-2xl font-black tracking-[0.16em] text-[#fff2db]">
+                        <p className="mt-5 text-base text-[#f8d39d]">{getTierText(resultWinner.tier)}</p>
+                        <button
+                          type="button"
+                          onClick={closeResultModal}
+                          className="lottery-result-button mx-auto mt-6 inline-flex min-h-16 min-w-[240px] items-center justify-center px-8 text-2xl font-black tracking-[0.16em] text-[#fff2db]"
+                        >
                           开心收下
-                        </div>
+                        </button>
+                        <p className="mt-4 text-sm tracking-[0.14em] text-[#ffe0ae]">
+                          {resultCountdown}s 后自动关闭
+                        </p>
                       </div>
                     </div>
                   </section>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </aside>
           </section>
         </div>
