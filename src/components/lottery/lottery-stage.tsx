@@ -100,6 +100,7 @@ export function LotteryStage({
     () => [visiblePrizes.slice(0, 3), visiblePrizes.slice(3, 5)].filter((row) => row.length > 0),
     [visiblePrizes],
   );
+  const shouldScrollWinners = winners.length >= 6;
 
   useEffect(() => {
     if (visiblePrizes.length === 0) {
@@ -443,8 +444,8 @@ export function LotteryStage({
                         </div>
                       </div>
                     ) : (
-                      <div className="lottery-winner-marquee-track">
-                        {[...winners, ...winners].map((winner, index) => (
+                      <div className={shouldScrollWinners ? "lottery-winner-marquee-track" : "grid gap-2.5"}>
+                        {(shouldScrollWinners ? [...winners, ...winners] : winners).map((winner, index) => (
                           <article
                             key={`${winner.id}-${index}`}
                             className="lottery-winner-row rounded-[14px] px-3 py-3"

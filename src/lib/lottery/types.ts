@@ -25,9 +25,19 @@ export type PrizeFilters = {
 };
 
 export type WinnerFilters = {
+  nickname?: string;
   keyword?: string;
   tier?: number;
   limit?: number;
+  page?: number;
+};
+
+export type WinnerListResult = {
+  items: WinnerListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 };
 
 export type DrawResult =

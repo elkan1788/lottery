@@ -6,6 +6,7 @@ import type {
   PrizeFilters,
   PrizeListItem,
   WinnerFilters,
+  WinnerListResult,
   WinnerListItem,
 } from "@/lib/lottery/types";
 
@@ -88,23 +89,27 @@ export async function listWinners(filters: number | WinnerFilters = 20): Promise
       ? { limit: filters }
       : {
           limit: filters.limit ?? 20,
+          nickname: filters.nickname?.trim() || undefined,
           keyword: filters.keyword?.trim() || undefined,
           tier: filters.tier,
         };
 
   return prisma.lotteryWinner.findMany({
     where: {
+      ...(normalized.nickname
+        ? {
+            nickname: {
+              contains: normalized.nickname,
+              mode: "insensitive",
+            },
+          }
+        : {}),
       ...(normalized.keyword
         ? {
-            OR: [
-              { nickname: { contains: normalized.keyword, mode: "insensitive" } },
-              {
-                prizeName: {
-                  contains: normalized.keyword,
-                  mode: "insensitive",
-                },
-              },
-            ],
+            prizeName: {
+              contains: normalized.keyword,
+              mode: "insensitive",
+            },
           }
         : {}),
       ...(normalized.tier ? { tier: normalized.tier } : {}),
@@ -121,6 +126,107 @@ export async function listWinners(filters: number | WinnerFilters = 20): Promise
       wonAt: winner.wonAt,
     })),
   );
+}
+
+export async function listWinnersPaginated(
+  filters: WinnerFilters = {},
+): Promise<WinnerListResult> {
+  const pageSize = filters.limit ?? 20;
+  const page = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
+  const nickname = filters.nickname?.trim() || undefined;
+  const keyword = filters.keyword?.trim() || undefined;
+  const tier = filters.tier;
+
+  const where: Prisma.LotteryWinnerWhereInput = {
+    ...(nickname
+      ? {
+          nickname: {
+            contains: nickname,
+            mode: "insensitive",
+          },
+        }
+      : {}),
+    ...(keyword
+      ? {
+          prizeName: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+        }
+      : {}),
+    ...(tier ? { tier } : {}),
+  };
+
+  const total = await prisma.lotteryWinner.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const skip = (currentPage - 1) * pageSize;
+
+  const items = await prisma.lotteryWinner
+    .findMany({
+      where,
+      orderBy: [{ wonAt: "desc" }, { id: "desc" }],
+      skip,
+      take: pageSize,
+      select: winnerSelect,
+    })
+    .then((winners) =>
+      winners.map((winner) => ({
+        id: winner.id,
+        nickname: winner.nickname,
+        prizeName: winner.prizeName,
+        tier: winner.tier,
+        wonAt: winner.wonAt,
+      })),
+    );
+
+  return {
+    items,
+    total,
+    page: currentPage,
+    pageSize,
+    totalPages,
+  };
+}
+
+export async function listAllWinners(filters: Omit<WinnerFilters, "limit" | "page"> = {}) {
+  const nickname = filters.nickname?.trim() || undefined;
+  const keyword = filters.keyword?.trim() || undefined;
+  const tier = filters.tier;
+
+  return prisma.lotteryWinner
+    .findMany({
+      where: {
+        ...(nickname
+          ? {
+              nickname: {
+                contains: nickname,
+                mode: "insensitive",
+              },
+            }
+          : {}),
+        ...(keyword
+          ? {
+              prizeName: {
+                contains: keyword,
+                mode: "insensitive",
+              },
+            }
+          : {}),
+        ...(tier ? { tier } : {}),
+      },
+      orderBy: [{ wonAt: "desc" }, { id: "desc" }],
+      select: winnerSelect,
+    })
+    .then((winners) =>
+      winners.map((winner) => ({
+        id: winner.id,
+        nickname: winner.nickname,
+        prizeName: winner.prizeName,
+        tier: winner.tier,
+        wonAt: winner.wonAt,
+      })),
+    );
 }
 
 export async function getEligiblePrizes(
