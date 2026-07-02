@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 import type { PrizeListItem, WinnerListItem } from "@/lib/lottery/types";
+import backgroundImage from "../../../design-prd/background.png";
 
 type WinnerWithLabel = WinnerListItem & {
   wonAtLabel: string;
@@ -41,28 +42,24 @@ type DrawErrorResponse = {
 const HIGHLIGHT_INTERVAL_MS = 90;
 const MIN_ROLL_DURATION_MS = 2200;
 
-function getTierLabel(tier: number) {
-  return ` ${tier} 等奖`;
+function getTierText(tier: number) {
+  return `${tier} 等奖`;
 }
 
 function getTimeLabel(label: string) {
   return label.split(" ")[1] || label;
 }
 
-function getWinnerBroadcast(winner: WinnerWithLabel) {
-  return `${winner.nickname} 同学抽中 ${getTierLabel(winner.tier)}「${winner.prizeName}」`;
-}
-
 function getPrizeCardTone(tier: number) {
   if (tier === 1) {
-    return "from-[#ffd76a]/28 via-[#ff8c42]/18 to-white/8";
+    return "from-[#ffbb57]/35 via-[#7f2d08]/20 to-[#110706]";
   }
 
   if (tier === 2) {
-    return "from-[#3be7ff]/22 via-[#597bff]/14 to-white/8";
+    return "from-[#31dbff]/18 via-[#11386b]/18 to-[#0a0913]";
   }
 
-  return "from-[#ff4db8]/22 via-[#a84dff]/14 to-white/8";
+  return "from-[#ff8e43]/18 via-[#4f170e]/18 to-[#0d0910]";
 }
 
 export function LotteryStage({
@@ -89,6 +86,7 @@ export function LotteryStage({
     () => prizes.filter((prize) => prize.isActive && prize.stockRemaining > 0),
     [prizes],
   );
+  const prizeRows = useMemo(() => [prizes.slice(0, 3), prizes.slice(3, 5)], [prizes]);
 
   useEffect(() => {
     if (activePrizes.length === 0) {
@@ -201,196 +199,213 @@ export function LotteryStage({
   }
 
   return (
-    <main className="lottery-shell min-h-screen overflow-hidden px-4 py-6 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col gap-6">
-        <section className="lottery-hero grid gap-6 rounded-lg border border-white/10 px-5 py-6 shadow-[0_0_80px_rgba(255,77,184,0.16)] lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <span className="inline-flex rounded-full border border-[#ffd76a]/35 bg-[#ffd76a]/10 px-4 py-1 text-xs tracking-[0.24em] text-[#ffe9a8] uppercase">
-                C9 Lottery Live
-              </span>
-              <div>
-                <h1 className="text-4xl font-black tracking-[0.08em] text-white sm:text-5xl lg:text-6xl">
-                  幸运大奖 今晚开箱
-                </h1>
-              </div>
-            </div>
+    <main
+      className="lottery-shell min-h-screen overflow-hidden px-2 py-3 text-white sm:px-4 lg:px-6"
+      style={{
+        backgroundImage: `linear-gradient(180deg, rgba(2, 4, 12, 0.28), rgba(3, 2, 7, 0.8)), url(${backgroundImage.src})`,
+      }}
+    >
+      <div className="lottery-stage-frame mx-auto flex min-h-[calc(100vh-1.5rem)] w-full max-w-[1600px] flex-col gap-4 px-2 py-3 sm:px-3 sm:py-4 lg:px-5">
+        <header className="lottery-title-panel px-2 py-3 text-center sm:px-4 lg:px-10 lg:py-5">
+          <p className="lottery-kicker text-[11px] uppercase sm:text-sm">
+            海派风华 x 弄堂新潮
+          </p>
+          <h1 className="lottery-title mt-2 text-[2.2rem] font-black leading-none sm:text-[3.4rem] lg:text-[5.6rem]">
+            石库门跑马灯
+          </h1>
+          <div className="lottery-title-ribbon mx-auto mt-3 inline-flex items-center justify-center px-5 py-2 text-sm font-semibold tracking-[0.28em] text-[#ffd98b] sm:text-base">
+            潮酷娱乐抽奖盛典
           </div>
+        </header>
 
-          <div className="rounded-lg border border-white/12 bg-black/22 p-4 backdrop-blur-sm">
-            <div className="grid gap-3">
-              <label className="space-y-2">
-                <span className="text-sm text-white/76">花名</span>
-                <input
-                  value={nickname}
-                  onChange={(event) => setNickname(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      void handleDraw();
-                    }
-                  }}
-                  maxLength={40}
-                  placeholder="请输入参与抽奖的花名"
-                  className="h-12 w-full rounded-md border border-white/12 bg-white/8 px-4 text-base text-white outline-none transition focus:border-[#3be7ff]/55 focus:bg-white/10"
-                />
-              </label>
-
-              <button
-                type="button"
-                onClick={() => void handleDraw()}
-                disabled={isSubmitting || drawablePrizes.length === 0}
-                className="lottery-draw-button h-12 rounded-md text-base font-semibold text-[#2b071a] disabled:cursor-not-allowed disabled:opacity-55"
-              >
-                {isSubmitting ? "抽奖进行中..." : drawablePrizes.length === 0 ? "活动已结束" : "开始抽奖"}
-              </button>
-
-              <div className="rounded-md border border-white/10 bg-black/18 px-4 py-3 text-sm text-white/74">
-                {statusMessage}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid flex-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-4">
-            <header className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-bold tracking-[0.08em] text-white">奖品宫格</h2>
-              </div>
-            </header>
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {prizes.map((prize) => {
-                const visibleIndex = activePrizes.findIndex((item) => item.id === prize.id);
-                const isHighlighted =
-                  visibleIndex >= 0 &&
-                  activePrizes.length > 0 &&
-                  (resolvedActiveIndex >= 0 ? resolvedActiveIndex : activeIndex) === visibleIndex &&
-                  (isSubmitting || resultPrizeId === prize.id);
-
-                return (
-                  <article
-                    key={prize.id}
-                    className={`lottery-prize-card relative overflow-hidden rounded-lg border border-white/10 bg-gradient-to-br ${getPrizeCardTone(prize.tier)} p-4 ${
-                      isHighlighted ? "lottery-prize-card-active" : ""
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <span className="inline-flex rounded-full border border-white/14 bg-black/20 px-2.5 py-1 text-[11px] text-white/72">
-                          {getTierLabel(prize.tier)}
-                        </span>
-                        <h3 className="mt-3 line-clamp-2 text-lg font-semibold text-white">
-                          {prize.name}
-                        </h3>
-                      </div>
-
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/12 bg-black/15">
-                        {prize.imageUrl ? (
-                          <Image
-                            src={prize.imageUrl}
-                            alt={prize.name}
-                            width={64}
-                            height={64}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-[11px] text-white/40">暂无图片</span>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-
-          <aside className="grid gap-6">
-            <section className="rounded-lg border border-[#ffd76a]/18 bg-black/22 p-5 shadow-[0_0_60px_rgba(255,215,106,0.08)]">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-[0.08em] text-white">中奖揭晓</h2>
-                  <p className="mt-1 text-sm text-white/60">本轮抽奖结果将在这里点亮。</p>
+        <div className="flex flex-1 min-h-0 flex-col">
+          <section className="grid flex-1 min-h-0 items-stretch gap-4 xl:grid-cols-[minmax(0,1.18fr)_320px]">
+            <div className="flex min-h-0 flex-col gap-4">
+              <section className="lottery-control-panel grid gap-3 p-3 sm:grid-cols-[140px_minmax(0,1fr)_240px] sm:items-center sm:p-4">
+                <div className="lottery-input-label justify-self-stretch text-center text-2xl font-black tracking-[0.3em] text-[#ffd68a]">
+                  花名
                 </div>
-                <span className="rounded-full border border-[#ff4db8]/28 bg-[#ff4db8]/10 px-3 py-1 text-xs text-[#ffc7e9]">
-                  实时开奖
-                </span>
-              </div>
+                <label className="block">
+                  <span className="sr-only">花名</span>
+                  <input
+                    value={nickname}
+                    onChange={(event) => setNickname(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleDraw();
+                      }
+                    }}
+                    maxLength={40}
+                    placeholder="请输入您的花名"
+                    className="lottery-name-input h-16 w-full px-5 text-lg text-white outline-none"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void handleDraw()}
+                  disabled={isSubmitting || drawablePrizes.length === 0}
+                  className="lottery-draw-button h-16 text-xl font-black tracking-[0.18em] text-[#eff8ff] disabled:cursor-not-allowed disabled:opacity-55"
+                >
+                  <span className="block">{isSubmitting ? "抽奖进行中" : drawablePrizes.length === 0 ? "活动已结束" : "开始抽奖"}</span>
+                  <span className="mt-1 block text-xs font-medium tracking-[0.28em] text-[#80ddff]">
+                    START LOTTERY
+                  </span>
+                </button>
+              </section>
 
-              <div className="mt-5">
+              <section className="lottery-prize-wall p-3 sm:p-4">
+                <div className="space-y-3">
+                  {prizeRows.map((row, rowIndex) => (
+                    <div
+                      key={`row-${rowIndex}`}
+                      className={`mx-auto grid max-w-[1020px] gap-3 ${
+                        row.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
+                      }`}
+                    >
+                      {row.map((prize) => {
+                        const visibleIndex = activePrizes.findIndex((item) => item.id === prize.id);
+                        const isHighlighted =
+                          visibleIndex >= 0 &&
+                          activePrizes.length > 0 &&
+                          (resolvedActiveIndex >= 0 ? resolvedActiveIndex : activeIndex) === visibleIndex &&
+                          (isSubmitting || resultPrizeId === prize.id);
+
+                        return (
+                          <article
+                            key={prize.id}
+                            className={`lottery-prize-card relative mx-auto min-h-[218px] w-full max-w-[320px] overflow-hidden rounded-[14px] border border-[#7f4c1b] bg-gradient-to-b ${getPrizeCardTone(prize.tier)} p-3 ${
+                              isHighlighted ? "lottery-prize-card-active" : ""
+                            } ${!prize.isActive ? "opacity-65 saturate-50" : ""}`}
+                          >
+                            <div className="lottery-prize-number">{getTierText(prize.tier)}</div>
+                            <div className="lottery-prize-arch h-full rounded-[12px] px-3 pb-4 pt-10 text-center">
+                              <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-[10px] border border-[#f3c172]/20 bg-black/20 shadow-[inset_0_0_24px_rgba(0,0,0,0.42)]">
+                                {prize.imageUrl ? (
+                                  <Image
+                                    src={prize.imageUrl}
+                                    alt={prize.name}
+                                    width={112}
+                                    height={112}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-xs text-white/45">暂无图片</span>
+                                )}
+                              </div>
+
+                              <h2 className="mt-6 text-[1.6rem] font-semibold leading-tight text-[#fff4d7]">
+                                {prize.name}
+                              </h2>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <footer className="lottery-bottom-plaque mx-auto flex justify-center px-8 py-3 text-center text-sm tracking-[0.28em] text-[#f8d39c]">
+                上海记忆 · 未来狂欢
+              </footer>
+            </div>
+
+            <aside className="flex min-h-0 h-full flex-col gap-4 self-stretch">
+              <section className="lottery-side-panel flex min-h-0 flex-1 flex-col">
+                <div className="lottery-side-heading">
+                  <h2 className="text-[2rem] font-black tracking-[0.18em] text-[#fff1c3]">中奖名单</h2>
+                  <p className="mt-2 text-sm tracking-[0.22em] text-[#eac17d]">WINNER LIST</p>
+                </div>
+
+                <div className="mt-4 flex-1 overflow-hidden px-2 pb-2">
+                  <div className="lottery-winner-marquee h-full">
+                    {winners.length === 0 ? (
+                      <div className="lottery-empty-panel flex h-full items-center justify-center px-4 py-10 text-center text-sm text-[#e3c18c]/70">
+                        暂无中奖记录。
+                      </div>
+                    ) : (
+                      <div className="lottery-winner-marquee-track">
+                        {[...winners, ...winners].map((winner, index) => (
+                          <article
+                            key={`${winner.id}-${index}`}
+                            className="lottery-winner-row rounded-[14px] px-3 py-3"
+                          >
+                            <div className="lottery-winner-avatar">
+                              {winner.nickname.slice(0, 1)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-lg font-semibold text-[#fff3cf]">
+                                {winner.nickname}
+                              </p>
+                              <p className="mt-1 truncate text-base text-[#f0bd53]">
+                                {winner.prizeName}
+                              </p>
+                            </div>
+                            <time className="shrink-0 text-sm text-[#f2dbbb]">
+                              {getTimeLabel(winner.wonAtLabel)}
+                            </time>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <div className="mt-auto">
                 {resultWinner ? (
-                  <div className="lottery-result-panel rounded-lg border border-[#ffd76a]/28 px-5 py-6 text-center">
-                    <p className="text-sm tracking-[0.3em] text-[#ffe08b] uppercase">恭喜中奖</p>
-                    <p className="mt-4 text-3xl font-black text-white">
-                      {resultWinner.nickname}
-                      <span className="ml-3">同学</span>
-                    </p>
-                    <div className="mx-auto mt-4 flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border border-white/14 bg-black/18">
-                      {resultPrize?.imageUrl ? (
-                        <Image
-                          src={resultPrize.imageUrl}
-                          alt={resultWinner.prizeName}
-                          width={112}
-                          height={112}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-xs text-white/40">暂无图片</span>
-                      )}
+                  <section className="lottery-result-shell lottery-result-popup p-4">
+                    <div className="lottery-result-heading text-center">
+                      <p className="text-[2.5rem] font-black leading-none text-[#fff4cf] sm:text-[3.1rem]">
+                        恭喜中奖
+                      </p>
+                      <p className="mt-2 text-base tracking-[0.16em] text-[#ffcf7c]">
+                        CONGRATULATIONS
+                      </p>
                     </div>
-                    <p className="mt-3 text-lg text-white/78">{resultWinner.prizeName}</p>
-                    <p className="mt-2 text-sm text-white/58">
-                      {getTierLabel(resultWinner.tier)} · {resultWinner.wonAtLabel}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-white/12 bg-white/4 px-5 py-10 text-center text-sm text-white/48">
-                    本轮尚未开奖，点击“开始抽奖”揭晓幸运得主。
-                  </div>
-                )}
-              </div>
-            </section>
 
-            <section className="rounded-lg border border-white/10 bg-black/22 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-[0.08em] text-white">最近中奖名单</h2>
-                  <p className="mt-1 text-sm text-white/60">按时间倒序展示最新开奖记录。</p>
-                </div>
-                <span className="rounded-full border border-white/14 bg-white/7 px-3 py-1 text-xs text-white/68">
-                  Top 20
-                </span>
-              </div>
+                    <div className="lottery-result-firework lottery-result-firework-left" />
+                    <div className="lottery-result-firework lottery-result-firework-right" />
 
-              <div className="mt-5 max-h-[540px] overflow-hidden">
-                <div className="lottery-winner-marquee">
-                  {winners.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-white/12 bg-white/4 px-4 py-8 text-center text-sm text-white/48">
-                      暂无中奖记录。
+                    <div className="mt-4">
+                      <div className="lottery-result-panel rounded-[28px] px-5 py-6 text-center">
+                        <p className="text-5xl font-black tracking-[0.12em] text-[#fff0c4]">
+                          {resultWinner.nickname}
+                        </p>
+                        <p className="mt-4 text-lg tracking-[0.16em] text-[#ffd78a]">
+                          恭喜您获得
+                        </p>
+                        <p className="mt-3 text-[2rem] font-bold leading-tight text-[#ffcc52]">
+                          {resultWinner.prizeName}
+                        </p>
+                        <div className="mx-auto mt-5 flex h-48 w-48 items-center justify-center overflow-hidden rounded-[18px] border border-[#f4ce7d]/30 bg-black/15 shadow-[0_0_28px_rgba(255,186,75,0.2)]">
+                          {resultPrize?.imageUrl ? (
+                            <Image
+                              src={resultPrize.imageUrl}
+                              alt={resultWinner.prizeName}
+                              width={192}
+                              height={192}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm text-white/45">暂无图片</span>
+                          )}
+                        </div>
+                        <p className="mt-5 text-base text-[#f8d39d]">
+                          {getTierText(resultWinner.tier)} · {resultWinner.wonAtLabel}
+                        </p>
+                        <div className="lottery-result-button mx-auto mt-6 inline-flex min-h-16 min-w-[240px] items-center justify-center px-8 text-2xl font-black tracking-[0.16em] text-[#fff2db]">
+                          开心收下
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="lottery-winner-marquee-track">
-                      {[...winners, ...winners].map((winner, index) => (
-                        <article
-                          key={`${winner.id}-${index}`}
-                          className="lottery-winner-row rounded-lg border border-white/8 bg-white/5 px-4 py-3"
-                        >
-                          <span className="truncate text-sm text-white">
-                            {getWinnerBroadcast(winner)}
-                          </span>
-                          <time className="shrink-0 text-xs text-white/50">
-                            {getTimeLabel(winner.wonAtLabel)}
-                          </time>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  </section>
+                ) : null}
               </div>
-            </section>
-          </aside>
-        </section>
+            </aside>
+          </section>
+        </div>
       </div>
     </main>
   );
