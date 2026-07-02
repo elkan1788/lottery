@@ -1,20 +1,17 @@
 export type PrizeListItem = {
-  id: string;
+  id: number;
   name: string;
   tier: number;
   probabilityWeight: number;
-  stockTotal: number;
-  stockRemaining: number;
+  stock: number;
   imageUrl: string | null;
-  description: string | null;
   isActive: boolean;
-  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
 };
 
 export type WinnerListItem = {
-  id: string;
+  id: number;
   nickname: string;
   prizeName: string;
   tier: number;

@@ -1,47 +1,46 @@
-import { randomUUID } from "node:crypto";
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+type PrizeSeed = {
+  id: number;
+  name: string;
+  tier: number;
+  probabilityWeight: number;
+  stock: number;
+  imageUrl: string;
+  isActive: boolean;
+};
+
 const prizes = [
   {
-    id: randomUUID(),
+    id: 1,
     name: "一等奖 iPad Pro",
     tier: 1,
     probabilityWeight: 1,
-    stockTotal: 2,
-    stockRemaining: 2,
+    stock: 2,
     imageUrl: "/prizes/ipad-pro.png",
-    description: "旗舰平板大奖",
     isActive: true,
-    sortOrder: 1,
   },
   {
-    id: randomUUID(),
+    id: 2,
     name: "二等奖 AirPods Pro",
     tier: 2,
     probabilityWeight: 4,
-    stockTotal: 8,
-    stockRemaining: 8,
+    stock: 8,
     imageUrl: "/prizes/airpods-pro.png",
-    description: "热门耳机奖品",
     isActive: true,
-    sortOrder: 2,
   },
   {
-    id: randomUUID(),
+    id: 3,
     name: "三等奖 保温杯",
     tier: 3,
     probabilityWeight: 10,
-    stockTotal: 20,
-    stockRemaining: 20,
+    stock: 20,
     imageUrl: "/prizes/thermos-cup.png",
-    description: "日常实用礼品",
     isActive: true,
-    sortOrder: 3,
   },
-];
+] satisfies PrizeSeed[];
 
 async function main() {
   await prisma.lotteryWinner.deleteMany();
@@ -54,18 +53,14 @@ async function main() {
   await prisma.lotteryWinner.createMany({
     data: [
       {
-        id: randomUUID(),
         nickname: "Alex",
-        prizeId: prizes[1].id,
-        prizeNameSnapshot: "二等奖 AirPods Pro",
-        tierSnapshot: 2,
+        prizeName: "二等奖 AirPods Pro",
+        tier: 2,
       },
       {
-        id: randomUUID(),
         nickname: "Mia",
-        prizeId: prizes[2].id,
-        prizeNameSnapshot: "三等奖 保温杯",
-        tierSnapshot: 3,
+        prizeName: "三等奖 保温杯",
+        tier: 3,
       },
     ],
   });

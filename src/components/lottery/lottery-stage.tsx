@@ -11,7 +11,7 @@ type WinnerWithLabel = WinnerListItem & {
 };
 
 type LotteryApiWinner = {
-  id: string;
+  id: number;
   nickname: string;
   prizeName: string;
   tier: number;
@@ -74,22 +74,25 @@ export function LotteryStage({
   const [winners, setWinners] = useState(initialWinners);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [resultPrizeId, setResultPrizeId] = useState<string | null>(null);
+  const [resultPrizeId, setResultPrizeId] = useState<number | null>(null);
   const [resultWinner, setResultWinner] = useState<WinnerWithLabel | null>(null);
   const [statusMessage, setStatusMessage] = useState("输入花名后，点击开始抽奖。");
 
-  const activePrizes = useMemo(
+  const visiblePrizes = useMemo(
     () => prizes.filter((prize) => prize.isActive),
     [prizes],
   );
   const drawablePrizes = useMemo(
-    () => prizes.filter((prize) => prize.isActive && prize.stockRemaining > 0),
+    () => prizes.filter((prize) => prize.isActive && prize.stock > 0),
     [prizes],
   );
-  const prizeRows = useMemo(() => [prizes.slice(0, 3), prizes.slice(3, 5)], [prizes]);
+  const prizeRows = useMemo(
+    () => [visiblePrizes.slice(0, 3), visiblePrizes.slice(3, 5)].filter((row) => row.length > 0),
+    [visiblePrizes],
+  );
 
   useEffect(() => {
-    if (activePrizes.length === 0) {
+    if (visiblePrizes.length === 0) {
       return;
     }
 
@@ -98,18 +101,18 @@ export function LotteryStage({
     }
 
     const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % activePrizes.length);
+      setActiveIndex((current) => (current + 1) % visiblePrizes.length);
     }, HIGHLIGHT_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [activePrizes.length, isSubmitting, resultPrizeId]);
+  }, [visiblePrizes.length, isSubmitting, resultPrizeId]);
 
   const resolvedActiveIndex =
     !isSubmitting && resultPrizeId
-      ? activePrizes.findIndex((prize) => prize.id === resultPrizeId)
+      ? visiblePrizes.findIndex((prize) => prize.id === resultPrizeId)
       : activeIndex;
   const resultPrize = resultPrizeId
-    ? prizes.find((prize) => prize.id === resultPrizeId) ?? null
+    ? visiblePrizes.find((prize) => prize.id === resultPrizeId) ?? null
     : null;
 
   async function handleDraw() {
@@ -180,7 +183,7 @@ export function LotteryStage({
             prize.id === payload.prize.id
               ? {
                   ...prize,
-                  stockRemaining: payload.prize.stockRemaining,
+                  stock: payload.prize.stock,
                 }
               : prize,
           ),
@@ -264,10 +267,10 @@ export function LotteryStage({
                       }`}
                     >
                       {row.map((prize) => {
-                        const visibleIndex = activePrizes.findIndex((item) => item.id === prize.id);
+                        const visibleIndex = visiblePrizes.findIndex((item) => item.id === prize.id);
                         const isHighlighted =
                           visibleIndex >= 0 &&
-                          activePrizes.length > 0 &&
+                          visiblePrizes.length > 0 &&
                           (resolvedActiveIndex >= 0 ? resolvedActiveIndex : activeIndex) === visibleIndex &&
                           (isSubmitting || resultPrizeId === prize.id);
 
@@ -276,7 +279,7 @@ export function LotteryStage({
                             key={prize.id}
                             className={`lottery-prize-card relative mx-auto min-h-[218px] w-full max-w-[320px] overflow-hidden rounded-[14px] border border-[#7f4c1b] bg-gradient-to-b ${getPrizeCardTone(prize.tier)} p-3 ${
                               isHighlighted ? "lottery-prize-card-active" : ""
-                            } ${!prize.isActive ? "opacity-65 saturate-50" : ""}`}
+                            }`}
                           >
                             <div className="lottery-prize-number">{getTierText(prize.tier)}</div>
                             <div className="lottery-prize-arch h-full rounded-[12px] px-3 pb-4 pt-10 text-center">

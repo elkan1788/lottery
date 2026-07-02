@@ -8,36 +8,29 @@ datasource db {
 }
 
 model LotteryPrize {
-  id                String          @id
+  id                Int             @id @default(autoincrement())
   name              String
   tier              Int
   probabilityWeight Int             @default(1) @map("probability_weight")
-  stockTotal        Int             @default(0) @map("stock_total")
-  stockRemaining    Int             @default(0) @map("stock_remaining")
+  stock             Int             @default(0)
   imageUrl          String?         @map("image_url")
-  description       String?
   isActive          Boolean         @default(true) @map("is_active")
-  sortOrder         Int             @default(0) @map("sort_order")
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
-  winners           LotteryWinner[]
 
   @@map("lottery_prizes")
   @@index([tier])
 }
 
 model LotteryWinner {
-  id                String       @id
+  id         Int      @id @default(autoincrement())
   nickname          String
-  prizeId           String       @map("prize_id")
-  prizeNameSnapshot String       @map("prize_name_snapshot")
-  tierSnapshot      Int          @map("tier_snapshot")
+  prizeName         String       @map("prize_name")
+  tier              Int
   wonAt             DateTime     @default(now()) @map("won_at")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
-  prize             LotteryPrize @relation(fields: [prizeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
 
-  @@index([prizeId])
   @@index([wonAt(sort: Desc)])
   @@map("lottery_winner")
 }

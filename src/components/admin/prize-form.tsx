@@ -116,15 +116,15 @@ export function PrizeForm({
       </label>
 
       <label className="block">
-        <span className="mb-2 block text-sm text-white/70">总库存</span>
+        <span className="mb-2 block text-sm text-white/70">库存</span>
         <input
-          name="stockTotal"
+          name="stock"
           type="number"
           min="0"
-          defaultValue={editingPrize?.stockTotal ?? 0}
+          defaultValue={editingPrize?.stock ?? 0}
           className="w-full rounded-md border border-white/12 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-300/60"
         />
-        <FieldError state={state} field="stockTotal" />
+        <FieldError state={state} field="stock" />
       </label>
 
       <label className="block md:col-span-2">

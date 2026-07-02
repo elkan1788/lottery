@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { randomUUID } from "node:crypto";
 
 import { clearAdminSession, createAdminSession, validateAdminCredentials } from "@/lib/auth/session";
 import {
@@ -40,7 +39,7 @@ export async function savePrizeAction(
     name: formData.get("name"),
     tier: formData.get("tier"),
     probabilityWeight: formData.get("probabilityWeight"),
-    stockTotal: formData.get("stockTotal"),
+    stock: formData.get("stock"),
     imageUrl: formData.get("currentImageUrl"),
     isActive: formData.get("isActive") === "on",
   });
@@ -66,21 +65,9 @@ export async function savePrizeAction(
       };
     }
 
-    const consumedCount = Math.max(0, existingPrize.stockTotal - existingPrize.stockRemaining);
-    const nextStockRemaining = Math.max(0, payload.stockTotal - consumedCount);
-
-    await updatePrize(id, {
-      ...payload,
-      stockRemaining: nextStockRemaining,
-    });
+    await updatePrize(id, payload);
   } else {
-    await createPrize({
-      id: randomUUID(),
-      ...payload,
-      stockRemaining: payload.stockTotal,
-      description: null,
-      sortOrder: 0,
-    });
+    await createPrize(payload);
   }
 
   revalidatePath("/admin/prizes");

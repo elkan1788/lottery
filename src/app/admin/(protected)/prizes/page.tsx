@@ -14,7 +14,7 @@ function PrizeEditor({
   editingId,
   prizes,
 }: {
-  editingId?: string;
+  editingId?: number;
   prizes: Awaited<ReturnType<typeof listPrizes>>;
 }) {
   const editingPrize = prizes.find((item) => item.id === editingId) || null;
@@ -44,7 +44,7 @@ export default async function AdminPrizesPage({
   const status = getSingleParam(params.status) || "all";
   const sort = getSingleParam(params.sort) || "tier-asc";
   const keyword = getSingleParam(params.keyword) || "";
-  const editingPrizeId = getSingleParam(params.edit) || undefined;
+  const editingPrizeId = Number(getSingleParam(params.edit) || "") || undefined;
 
   const prizes = await listPrizes({
     status: status === "active" || status === "inactive" ? status : "all",
@@ -146,7 +146,7 @@ export default async function AdminPrizesPage({
                 </div>
                 <span>{prize.tier} 等奖</span>
                 <span>{prize.probabilityWeight}</span>
-                <span>{prize.stockTotal}</span>
+                <span>{prize.stock}</span>
                 <span className={prize.isActive ? "text-emerald-300" : "text-white/45"}>
                   {prize.isActive ? "上架中" : "已下架"}
                 </span>
