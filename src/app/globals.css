@@ -77,7 +77,7 @@ body::after {
 }
 
 .lottery-stage-frame {
-  width: 80%;
+  width: min(72vw, 1380px);
   position: relative;
 }
 
@@ -97,6 +97,11 @@ body::after {
 .lottery-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.lottery-stage-frame > div > section:first-child {
+  grid-template-columns: minmax(0, 1.16fr) 320px;
+  justify-content: center;
 }
 
 .lottery-title-panel {
@@ -591,15 +596,37 @@ body::after {
   }
 
   .lottery-stage-frame {
-    max-width: 70vw;
-    min-width: 1160px;
+    width: min(92vw, 1180px);
+  }
+
+  .lottery-stage-frame > div > section:first-child {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .lottery-stage-frame {
+    width: min(96vw, 980px);
+  }
+
+  .lottery-stage-frame > div > section:first-child {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 0.875rem;
   }
 }
 
 @media (max-width: 767px) {
   .lottery-shell {
     background-position: center top;
-    background-size: cover;
+    background-size: contain;
+  }
+
+  .lottery-stage-frame {
+    width: 100%;
+  }
+
+  .lottery-stage-frame > div > section:first-child {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-control-panel {
