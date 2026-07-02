@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { PrizeListItem, WinnerListItem } from "@/lib/lottery/types";
 import backgroundImage from "../../../design-prd/background.png";
@@ -69,6 +69,8 @@ export function LotteryStage({
   initialPrizes: PrizeListItem[];
   initialWinners: WinnerWithLabel[];
 }) {
+  const leftColumnRef = useRef<HTMLDivElement | null>(null);
+  const rightColumnRef = useRef<HTMLElement | null>(null);
   const [nickname, setNickname] = useState("");
   const [prizes, setPrizes] = useState(initialPrizes);
   const [winners, setWinners] = useState(initialWinners);
@@ -106,6 +108,37 @@ export function LotteryStage({
 
     return () => window.clearInterval(timer);
   }, [visiblePrizes.length, isSubmitting, resultPrizeId]);
+
+  useEffect(() => {
+    const leftColumn = leftColumnRef.current;
+    const rightColumn = rightColumnRef.current;
+
+    if (!leftColumn || !rightColumn) {
+      return;
+    }
+
+    const syncRightColumnHeight = () => {
+      const { height } = leftColumn.getBoundingClientRect();
+      if (height > 0) {
+        rightColumn.style.height = `${height}px`;
+      }
+    };
+
+    syncRightColumnHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncRightColumnHeight();
+    });
+
+    resizeObserver.observe(leftColumn);
+    window.addEventListener("resize", syncRightColumnHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", syncRightColumnHeight);
+      rightColumn.style.height = "";
+    };
+  }, [winners.length, resultWinner, visiblePrizes.length]);
 
   const resolvedActiveIndex =
     !isSubmitting && resultPrizeId
@@ -221,9 +254,12 @@ export function LotteryStage({
           </div>
         </header>
 
-        <div className="flex flex-1 min-h-0 flex-col">
-          <section className="grid flex-1 min-h-0 items-stretch gap-4 xl:grid-cols-[minmax(0,1.18fr)_320px]">
-            <div className="flex min-h-0 flex-col gap-4">
+        <div className="flex min-h-0 flex-col">
+          <section className="grid min-h-0 items-start gap-4 xl:grid-cols-[minmax(0,1.18fr)_320px]">
+            <div
+              ref={leftColumnRef}
+              className="flex min-h-0 flex-col gap-4"
+            >
               <section className="lottery-control-panel grid gap-3 p-3 sm:grid-cols-[140px_minmax(0,1fr)_240px] sm:items-center sm:p-4">
                 <div className="lottery-input-label justify-self-stretch text-center text-2xl font-black tracking-[0.3em] text-[#ffd68a]">
                   花名
@@ -314,7 +350,10 @@ export function LotteryStage({
               </footer>
             </div>
 
-            <aside className="flex min-h-0 h-full flex-col gap-4 self-stretch">
+            <aside
+              ref={rightColumnRef}
+              className="relative flex min-h-0 flex-col overflow-hidden"
+            >
               <section className="lottery-side-panel flex min-h-0 flex-1 flex-col">
                 <div className="lottery-side-heading">
                   <h2 className="text-[2rem] font-black tracking-[0.18em] text-[#fff1c3]">中奖名单</h2>
@@ -356,9 +395,9 @@ export function LotteryStage({
                 </div>
               </section>
 
-              <div className="mt-auto">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20">
                 {resultWinner ? (
-                  <section className="lottery-result-shell lottery-result-popup p-4">
+                  <section className="lottery-result-shell lottery-result-popup pointer-events-auto p-4">
                     <div className="lottery-result-heading text-center">
                       <p className="text-[2.5rem] font-black leading-none text-[#fff4cf] sm:text-[3.1rem]">
                         恭喜中奖
