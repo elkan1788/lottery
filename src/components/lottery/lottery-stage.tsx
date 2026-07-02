@@ -411,8 +411,36 @@ export function LotteryStage({
                 <div className="mt-4 flex-1 overflow-hidden px-2 pb-2">
                   <div className="lottery-winner-marquee h-full">
                     {winners.length === 0 ? (
-                      <div className="lottery-empty-panel flex h-full items-center justify-center px-4 py-10 text-center text-sm text-[#e3c18c]/70">
-                        暂无中奖记录。
+                      <div className="lottery-empty-panel flex h-full items-center justify-center px-3 py-4">
+                        <div className="lottery-empty-card w-full max-w-[300px] px-5 py-6 text-center">
+                          <div className="lottery-empty-card-inner">
+                            <h3 className="text-[2.2rem] font-black leading-none tracking-[0.12em] text-[#f4c65c]">
+                              等待第一位幸运儿
+                            </h3>
+                            <p className="mt-3 text-[1.05rem] font-semibold tracking-[0.08em] text-[#d8a63d]">
+                              WAITING FOR THE FIRST LUCKY WINNER
+                            </p>
+
+                            <div className="lottery-empty-illustration mt-5" aria-hidden="true">
+                              <div className="lottery-empty-lamp lottery-empty-lamp-left" />
+                              <div className="lottery-empty-lamp lottery-empty-lamp-right" />
+                              <div className="lottery-empty-building">
+                                <div className="lottery-empty-door lottery-empty-door-left" />
+                                <div className="lottery-empty-door lottery-empty-door-right" />
+                              </div>
+                            </div>
+
+                            <div className="mt-5 space-y-2 text-base tracking-[0.28em] text-[#d4a03d]">
+                              <p>- 灯光已就绪 -</p>
+                              <p>- 幸运即将降临 -</p>
+                            </div>
+                            <div className="lottery-empty-dots" aria-hidden="true">
+                              {Array.from({ length: 7 }).map((_, index) => (
+                                <span key={index} />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <div className="lottery-winner-marquee-track">
