@@ -32,6 +32,7 @@ export function PrizeForm({
 }: {
   editingPrize: PrizeListItem | null;
 }) {
+  const isLocalUploadEnabled = process.env.NODE_ENV === "development";
   const [state, formAction, pending] = useActionState(
     savePrizeAction,
     initialPrizeFormState,
@@ -67,7 +68,7 @@ export function PrizeForm({
       }
 
       setImageUrl(payload.imageUrl);
-      setUploadMessage("图片上传成功。");
+      setUploadMessage("图片上传成功，请提交表单保存奖品。");
     } catch {
       setUploadMessage("图片上传失败，请稍后再试。");
     } finally {
@@ -79,7 +80,6 @@ export function PrizeForm({
   return (
     <form action={formAction} className="mt-6 grid gap-5 md:grid-cols-2">
       <input type="hidden" name="id" defaultValue={editingPrize?.id ?? ""} />
-      <input type="hidden" name="currentImageUrl" value={imageUrl} readOnly />
 
       <label className="block">
         <span className="mb-2 block text-sm text-white/70">奖品名称</span>
@@ -128,7 +128,7 @@ export function PrizeForm({
       </label>
 
       <label className="block md:col-span-2">
-        <span className="mb-2 block text-sm text-white/70">奖品图片</span>
+        <span className="mb-2 block text-sm text-white/70">奖品图片路径</span>
         {imageUrl ? (
           <div className="mb-3 flex items-center gap-3 rounded-md border border-white/10 bg-black/20 p-3">
             <Image
@@ -141,19 +141,36 @@ export function PrizeForm({
             <p className="text-xs text-white/55">{imageUrl}</p>
           </div>
         ) : null}
-        <input
-          name="imageFile"
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="w-full rounded-md border border-dashed border-white/16 bg-black/20 px-4 py-3 text-sm text-white outline-none transition file:mr-4 file:rounded-md file:border-0 file:bg-cyan-300/12 file:px-3 file:py-2 file:text-sm file:text-cyan-100"
-        />
-        {uploadMessage ? (
-          <p className={`mt-2 text-xs ${uploadMessage.includes("成功") ? "text-cyan-200" : "text-amber-200"}`}>
-            {uploadMessage}
-          </p>
+        {isLocalUploadEnabled ? (
+          <>
+            <input
+              name="imageFile"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="mb-3 w-full rounded-md border border-dashed border-white/16 bg-black/20 px-4 py-3 text-sm text-white outline-none transition file:mr-4 file:rounded-md file:border-0 file:bg-cyan-300/12 file:px-3 file:py-2 file:text-sm file:text-cyan-100"
+            />
+            {uploadMessage ? (
+              <p className={`mb-3 text-xs ${uploadMessage.includes("成功") ? "text-cyan-200" : "text-amber-200"}`}>
+                {uploadMessage}
+              </p>
+            ) : null}
+            {uploading ? <p className="mb-3 text-xs text-white/60">图片上传中...</p> : null}
+          </>
         ) : null}
-        {uploading ? <p className="mt-2 text-xs text-white/60">图片上传中...</p> : null}
+        <input
+          name="imageUrl"
+          type="text"
+          value={imageUrl}
+          onChange={(event) => setImageUrl(event.target.value)}
+          placeholder="/uploads/prizes/example.jpg"
+          className="w-full rounded-md border border-white/12 bg-black/20 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-cyan-300/60"
+        />
+        <p className="mt-2 text-xs text-white/50">
+          {isLocalUploadEnabled
+            ? "本地可上传图片生成路径；部署前需将 public/uploads/prizes 中的新图片随代码提交。"
+            : "图片需先放入 public/uploads/prizes 并随代码部署，线上访问路径为 /uploads/prizes/文件名。"}
+        </p>
         <FieldError state={state} field="imageUrl" />
       </label>
 

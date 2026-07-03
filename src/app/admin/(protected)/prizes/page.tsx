@@ -26,7 +26,7 @@ function PrizeEditor({
         <div>
           <h2 className="text-xl font-semibold">{editingPrize ? "编辑奖品" : "新增奖品"}</h2>
           <p className="mt-2 text-sm leading-6 text-white/70">
-            支持维护本地上传图片、中奖权重、库存和上下架状态。
+            支持维护静态图片路径、中奖权重、库存和上下架状态。
           </p>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default async function AdminPrizesPage({
       <section className="rounded-lg border border-white/10 bg-white/5 p-6">
         <h1 className="text-3xl font-semibold">奖品管理</h1>
         <p className="mt-3 text-sm leading-6 text-white/70">
-          这里可以完成奖品列表查看、新增、编辑，以及图片上传、权重、库存、上下架状态维护。
+          这里可以完成奖品列表查看、新增、编辑，以及静态图片路径、权重、库存、上下架状态维护。
         </p>
 
         <form className="mt-6 grid gap-4 md:grid-cols-[1.2fr_180px_180px_auto]">
@@ -147,7 +147,7 @@ export default async function AdminPrizesPage({
                   <div className="min-w-0">
                     <p className="truncate font-medium text-white">{prize.name}</p>
                     <p className="mt-1 text-xs text-white/45">
-                      {prize.imageUrl ? "已上传图片" : "未配置图片"}
+                      {prize.imageUrl ? "已配置图片" : "未配置图片"}
                     </p>
                   </div>
                 </div>

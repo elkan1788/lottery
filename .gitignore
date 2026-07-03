@@ -25,3 +25,5 @@ pnpm-debug.log*
 # local generated/content dirs
 /docs
 /public
+!/public/uploads/prizes/01.jepg
+

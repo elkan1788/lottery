@@ -10,6 +10,10 @@ export const prizeFormSchema = z.object({
     .string()
     .trim()
     .max(500, "图片地址不能超过 500 个字符")
+    .refine(
+      (value) => value === "" || value.startsWith("/uploads/prizes/"),
+      "图片路径需以 /uploads/prizes/ 开头",
+    )
     .optional()
     .transform((value) => value || null),
   isActive: z.boolean(),

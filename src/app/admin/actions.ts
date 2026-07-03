@@ -126,7 +126,7 @@ export async function savePrizeAction(
     tier: formData.get("tier"),
     probabilityWeight: formData.get("probabilityWeight"),
     stock: formData.get("stock"),
-    imageUrl: formData.get("currentImageUrl"),
+    imageUrl: formData.get("imageUrl"),
     isActive: formData.get("isActive") === "on",
   });
 

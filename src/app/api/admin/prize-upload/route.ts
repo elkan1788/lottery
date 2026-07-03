@@ -1,6 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
@@ -33,6 +33,13 @@ async function savePrizeImage(file: File) {
 }
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json(
+      { message: "线上环境请使用已随代码部署的静态图片路径。" },
+      { status: 403 },
+    );
+  }
+
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ message: "请先登录后台。" }, { status: 401 });
   }

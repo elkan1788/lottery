@@ -143,8 +143,9 @@ npm run dev
 
 说明：
 
-- 奖品图片采用本地文件上传方式
-- 上传成功后，图片会保存到 `public/uploads/prizes/`
+- 奖品图片采用静态资源路径方式
+- 图片需先放入 `public/uploads/prizes/` 并随代码提交部署
+- 图片访问路径填写为 `/uploads/prizes/文件名`，例如 `/uploads/prizes/demo.jpg`
 - 新增奖品时，系统会自动将剩余库存初始化为总库存
 
 #### 编辑奖品
