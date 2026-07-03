@@ -21,3 +21,7 @@ pnpm-debug.log*
 
 # prisma
 /prisma/dev.db*
+
+# local generated/content dirs
+/docs
+/public
