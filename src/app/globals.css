@@ -181,6 +181,11 @@ body::after {
     0 0 22px rgba(255, 142, 56, 0.15);
 }
 
+.lottery-control-panel {
+  border: 0px;
+  box-shadow: none;
+}
+
 .lottery-control-panel,
 .lottery-prize-wall,
 .lottery-side-panel,
