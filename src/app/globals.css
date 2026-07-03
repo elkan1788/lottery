@@ -37,10 +37,10 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(3, 4, 14, 0.18), rgba(2, 1, 7, 0.88)),
-    radial-gradient(circle at 50% 12%, rgba(37, 126, 255, 0.16), transparent 24%),
-    radial-gradient(circle at 14% 14%, rgba(255, 89, 39, 0.22), transparent 28%),
-    radial-gradient(circle at 84% 14%, rgba(255, 161, 64, 0.16), transparent 24%);
+    linear-gradient(180deg, rgba(3, 4, 14, 0.08), rgba(2, 1, 7, 0.54)),
+    radial-gradient(circle at 50% 12%, rgba(37, 126, 255, 0.2), transparent 26%),
+    radial-gradient(circle at 14% 14%, rgba(255, 89, 39, 0.26), transparent 30%),
+    radial-gradient(circle at 84% 14%, rgba(255, 161, 64, 0.22), transparent 26%);
   z-index: -3;
 }
 
@@ -65,14 +65,28 @@ body::after {
   background-color: #040207;
 }
 
+.lottery-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: inherit;
+  background-position: inherit;
+  background-repeat: inherit;
+  background-size: inherit;
+  filter: brightness(1.18) saturate(1.05);
+  opacity: 0.92;
+  z-index: -2;
+}
+
 .lottery-shell::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 24%, rgba(28, 131, 255, 0.18), transparent 18%),
-    linear-gradient(180deg, rgba(4, 10, 26, 0.16) 0%, rgba(6, 3, 10, 0.36) 42%, rgba(4, 2, 6, 0.82) 100%);
+    radial-gradient(circle at 50% 24%, rgba(28, 131, 255, 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(4, 10, 26, 0.03) 0%, rgba(6, 3, 10, 0.08) 42%, rgba(4, 2, 6, 0.22) 100%);
   z-index: -1;
 }
 

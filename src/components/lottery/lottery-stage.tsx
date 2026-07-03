@@ -290,7 +290,7 @@ export function LotteryStage({
     <main
       className="lottery-shell min-h-screen overflow-hidden px-2 py-3 text-white sm:px-4 lg:px-6"
       style={{
-        backgroundImage: `linear-gradient(180deg, rgba(2, 4, 12, 0.28), rgba(3, 2, 7, 0.8)), url(${backgroundImage.src})`,
+        backgroundImage: `linear-gradient(180deg, rgba(2, 4, 12, 0.04), rgba(3, 2, 7, 0.18)), url(${backgroundImage.src})`,
       }}
     >
       <div className="lottery-stage-frame mx-auto flex min-h-[calc(100vh-1.5rem)] w-full max-w-[1600px] flex-col gap-4 px-2 py-3 sm:px-3 sm:py-4 lg:px-5">
