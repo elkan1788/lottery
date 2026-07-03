@@ -260,6 +260,7 @@ export function SetupTabs({
                       idleText="确认清空"
                       pendingText="清空中..."
                       tone="pink"
+                      onClick={() => setIsWinnerConfirmOpen(false)}
                     />
                   </div>
                 </div>
@@ -302,11 +303,13 @@ function SubmitButton({
   pendingText,
   tone,
   disabled = false,
+  onClick,
 }: {
   idleText: string;
   pendingText: string;
   tone: "cyan" | "emerald" | "pink";
   disabled?: boolean;
+  onClick?: () => void;
 }) {
   const { pending } = useFormStatus();
 
@@ -321,6 +324,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={pending || disabled}
+      onClick={onClick}
       className={`rounded-md border px-4 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${classNameMap[tone]}`}
     >
       {pending ? pendingText : idleText}
