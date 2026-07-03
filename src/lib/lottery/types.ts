@@ -50,3 +50,13 @@ export type DrawResult =
       status: "ended";
       message: string;
     };
+
+export type LotteryTableStatus = {
+  prizesTableExists: boolean;
+  winnersTableExists: boolean;
+};
+
+export type WinnerTierStat = {
+  tier: number;
+  count: number;
+};

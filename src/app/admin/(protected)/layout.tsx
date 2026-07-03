@@ -4,6 +4,7 @@ import { logoutAdminAction } from "@/app/admin/actions";
 import { requireAdminSession } from "@/lib/auth/session";
 
 const navItems = [
+  { href: "/admin/setup", label: "系统初始化" },
   { href: "/admin/prizes", label: "奖品管理" },
   { href: "/admin/winners", label: "中奖名单" },
 ];

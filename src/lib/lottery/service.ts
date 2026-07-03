@@ -1,10 +1,12 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import type {
   DrawResult,
+  LotteryTableStatus,
   PrizeFilters,
   PrizeListItem,
+  WinnerTierStat,
   WinnerFilters,
   WinnerListResult,
   WinnerListItem,
@@ -30,7 +32,31 @@ const prizeSelect = {
   updatedAt: true,
 } as const;
 
+const LOTTERY_TABLE_NAMES = ["lottery_prizes", "lottery_winner"] as const;
+type LotteryTableName = (typeof LOTTERY_TABLE_NAMES)[number];
+
+async function getExistingLotteryTableNames(): Promise<Set<string>> {
+  const rows = await prisma.$queryRaw<Array<{ table_name: string }>>`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = ANY (current_schemas(false))
+      AND table_name IN (${Prisma.join(LOTTERY_TABLE_NAMES)})
+  `;
+
+  return new Set(rows.map((row) => row.table_name));
+}
+
+async function hasRequiredLotteryTables(requiredTables: LotteryTableName[]) {
+  const tableNames = await getExistingLotteryTableNames();
+
+  return requiredTables.every((tableName) => tableNames.has(tableName));
+}
+
 export async function listPrizes(filters: PrizeFilters = {}): Promise<PrizeListItem[]> {
+  if (!(await hasRequiredLotteryTables(["lottery_prizes"]))) {
+    return [];
+  }
+
   const orderByMap: Record<NonNullable<PrizeFilters["sort"]>, Prisma.LotteryPrizeOrderByWithRelationInput[]> =
     {
       "tier-asc": [{ tier: "asc" }, { id: "asc" }],
@@ -84,6 +110,10 @@ export async function updatePrize(
 }
 
 export async function listWinners(filters: number | WinnerFilters = 20): Promise<WinnerListItem[]> {
+  if (!(await hasRequiredLotteryTables(["lottery_winner"]))) {
+    return [];
+  }
+
   const normalized =
     typeof filters === "number"
       ? { limit: filters }
@@ -131,6 +161,16 @@ export async function listWinners(filters: number | WinnerFilters = 20): Promise
 export async function listWinnersPaginated(
   filters: WinnerFilters = {},
 ): Promise<WinnerListResult> {
+  if (!(await hasRequiredLotteryTables(["lottery_winner"]))) {
+    return {
+      items: [],
+      total: 0,
+      page: 1,
+      pageSize: filters.limit ?? 20,
+      totalPages: 1,
+    };
+  }
+
   const pageSize = filters.limit ?? 20;
   const page = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
   const nickname = filters.nickname?.trim() || undefined;
@@ -190,6 +230,10 @@ export async function listWinnersPaginated(
 }
 
 export async function listAllWinners(filters: Omit<WinnerFilters, "limit" | "page"> = {}) {
+  if (!(await hasRequiredLotteryTables(["lottery_winner"]))) {
+    return [];
+  }
+
   const nickname = filters.nickname?.trim() || undefined;
   const keyword = filters.keyword?.trim() || undefined;
   const tier = filters.tier;
@@ -229,9 +273,112 @@ export async function listAllWinners(filters: Omit<WinnerFilters, "limit" | "pag
     );
 }
 
+export async function getLotteryTableStatus(): Promise<LotteryTableStatus> {
+  const tableNames = await getExistingLotteryTableNames();
+
+  return {
+    prizesTableExists: tableNames.has("lottery_prizes"),
+    winnersTableExists: tableNames.has("lottery_winner"),
+  };
+}
+
+export async function createLotteryTables() {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "lottery_prizes" (
+      "id" SERIAL NOT NULL,
+      "name" TEXT NOT NULL,
+      "tier" INTEGER NOT NULL,
+      "probability_weight" INTEGER NOT NULL DEFAULT 1,
+      "stock" INTEGER NOT NULL DEFAULT 0,
+      "image_url" TEXT,
+      "is_active" BOOLEAN NOT NULL DEFAULT true,
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "lottery_prizes_pkey" PRIMARY KEY ("id")
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "lottery_winner" (
+      "id" SERIAL NOT NULL,
+      "nickname" TEXT NOT NULL,
+      "prize_name" TEXT NOT NULL,
+      "tier" INTEGER NOT NULL,
+      "won_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "lottery_winner_pkey" PRIMARY KEY ("id")
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "lottery_prizes_tier_idx"
+    ON "lottery_prizes"("tier");
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "lottery_winner_won_at_idx"
+    ON "lottery_winner"("won_at" DESC);
+  `);
+
+  return getLotteryTableStatus();
+}
+
+export async function updatePrizeStocksByTier(input: Array<{ tier: number; stock: number }>) {
+  if (!(await hasRequiredLotteryTables(["lottery_prizes"]))) {
+    return 0;
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const results = await Promise.all(
+      input.map(({ tier, stock }) =>
+        tx.lotteryPrize.updateMany({
+          where: { tier },
+          data: { stock },
+        }),
+      ),
+    );
+
+    return results.reduce((sum, item) => sum + item.count, 0);
+  });
+}
+
+export async function getWinnerTierStats(): Promise<WinnerTierStat[]> {
+  if (!(await hasRequiredLotteryTables(["lottery_winner"]))) {
+    return [];
+  }
+
+  const rows = await prisma.lotteryWinner.groupBy({
+    by: ["tier"],
+    _count: {
+      _all: true,
+    },
+    orderBy: {
+      tier: "asc",
+    },
+  });
+
+  return rows.map((row) => ({
+    tier: row.tier,
+    count: row._count._all,
+  }));
+}
+
+export async function clearAllWinners() {
+  if (!(await hasRequiredLotteryTables(["lottery_winner"]))) {
+    return { count: 0 };
+  }
+
+  return prisma.lotteryWinner.deleteMany();
+}
+
 export async function getEligiblePrizes(
   tx: Prisma.TransactionClient | typeof prisma = prisma,
 ): Promise<PrizeListItem[]> {
+  if (tx === prisma && !(await hasRequiredLotteryTables(["lottery_prizes"]))) {
+    return [];
+  }
+
   return tx.lotteryPrize.findMany({
     where: {
       isActive: true,

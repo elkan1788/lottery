@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { PrizeForm } from "@/components/admin/prize-form";
-import { listPrizes } from "@/lib/lottery/service";
+import { getLotteryTableStatus, listPrizes } from "@/lib/lottery/service";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -40,6 +41,12 @@ export default async function AdminPrizesPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const tableStatus = await getLotteryTableStatus();
+
+  if (!tableStatus.prizesTableExists || !tableStatus.winnersTableExists) {
+    redirect("/admin/setup");
+  }
+
   const params = await searchParams;
   const status = getSingleParam(params.status) || "all";
   const sort = getSingleParam(params.sort) || "tier-asc";

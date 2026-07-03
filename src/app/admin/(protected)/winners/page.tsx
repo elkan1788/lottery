@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import { listWinnersPaginated } from "@/lib/lottery/service";
+import { getLotteryTableStatus, listWinnersPaginated } from "@/lib/lottery/service";
 import { formatDateTimeToAppTimezone } from "@/lib/utils/time";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -44,6 +45,12 @@ export default async function AdminWinnersPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const tableStatus = await getLotteryTableStatus();
+
+  if (!tableStatus.prizesTableExists || !tableStatus.winnersTableExists) {
+    redirect("/admin/setup");
+  }
+
   const params = await searchParams;
   const nickname = getSingleParam(params.nickname) || "";
   const keyword = getSingleParam(params.keyword) || "";
